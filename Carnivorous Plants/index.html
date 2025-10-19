@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carnivorous Plants Collection Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.20.0/cannon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <script src="realistic-world.js"></script>
+    <script src="realistic-plants.js"></script>
+    <script src="in-game-store.js"></script>
+    <script src="simple-3d-game.js"></script>
+</head>
+<body>
+    <!-- Main Menu Screen -->
+    <div id="main-menu" class="screen active">
+        <div class="menu-container">
+            <header class="main-header">
+                <h1>🌿 Carnivorous Plants Collection Manager</h1>
+                <p>Grow, care for, and collect the world's most fascinating plants</p>
+            </header>
+
+            <!-- Save Game Management -->
+            <div class="save-games-section">
+                <h2>Your Collections</h2>
+                <div class="save-slots" id="save-slots">
+                    <!-- Save slots will be populated by JavaScript -->
+                </div>
+                <div class="save-controls">
+                    <button class="new-game-btn" onclick="showNewGameDialog()">
+                        🌱 Start New Collection
+                    </button>
+                    <button class="load-game-btn" onclick="showLoadGameDialog()" id="load-btn" disabled>
+                        📂 Load Collection
+                    </button>
+                    <button class="new-game-btn" onclick="startWorkingGame()" style="background: #28a745; margin-left: 10px;">
+                        🎮 START GAME
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Plant Growth Simulator Preview -->
+            <div class="simulator-preview">
+                <h3>🔬 Plant Growth Simulator</h3>
+                <p>Watch your plants grow in real-time with realistic care requirements</p>
+                <div class="preview-container">
+                    <div class="preview-plant" id="preview-plant">
+                        <!-- Animated preview plant -->
+                        <div class="plant-animation">
+                            <svg width="150" height="120" viewBox="0 0 150 120">
+                                <!-- Venus Flytrap Preview -->
+                                <g class="trap-preview">
+                                    <ellipse cx="60" cy="80" rx="15" ry="8" fill="#90EE90" class="lobe"/>
+                                    <ellipse cx="90" cy="80" rx="15" ry="8" fill="#FF69B4" class="lobe"/>
+                                    <line x1="50" y1="75" x2="50" y2="85" stroke="#000" stroke-width="1"/>
+                                    <line x1="100" y1="75" x2="100" y2="85" stroke="#000" stroke-width="1"/>
+                                </g>
+                                <text x="75" y="105" text-anchor="middle" fill="#666" font-size="12">Real-time growth & care</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="simulator-features">
+                        <ul>
+                            <li>🌡️ Temperature & humidity control</li>
+                            <li>💡 Light cycle management</li>
+                            <li>🪲 Feeding schedules</li>
+                            <li>🍂 Seasonal dormancy</li>
+                            <li>🌱 Realistic growth stages</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="game-info">
+                <div class="info-card">
+                    <h4>🏪 Plant Store</h4>
+                    <p>Browse and purchase realistic carnivorous plant specimens</p>
+                </div>
+                <div class="info-card">
+                    <h4>🧬 Species Database</h4>
+                    <p>Dionaea, Nepenthes, Sarracenia, Cephalotus, Darlingtonia & more</p>
+                </div>
+                <div class="info-card">
+                    <h4>📊 Collection Management</h4>
+                    <p>Track health, growth, and care requirements</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Game Dialog -->
+    <div id="new-game-dialog" class="modal hidden">
+        <div class="modal-content">
+            <h2>🌱 Start New Collection</h2>
+            <div class="dialog-content">
+                <label for="collection-name">Collection Name:</label>
+                <input type="text" id="collection-name" placeholder="Enter collection name..." maxlength="20">
+                
+                <label for="starting-money">Starting Budget:</label>
+                <select id="starting-money">
+                    <option value="100">Beginner - $100</option>
+                    <option value="250" selected>Intermediate - $250</option>
+                    <option value="500">Advanced - $500</option>
+                    <option value="1000">Expert - $1,000</option>
+                </select>
+                
+                <label for="difficulty">Care Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy - Forgiving care</option>
+                    <option value="normal" selected>Normal - Realistic care</option>
+                    <option value="hard">Hard - Expert level</option>
+                </select>
+            </div>
+            <div class="dialog-buttons">
+                <button onclick="createNewGame()" class="primary-btn">Create Collection</button>
+                <button onclick="closeNewGameDialog()" class="secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Game Dialog -->
+    <div id="load-game-dialog" class="modal hidden">
+        <div class="modal-content">
+            <h2>📂 Load Collection</h2>
+            <div class="load-game-list" id="load-game-list">
+                <!-- Load game options populated by JavaScript -->
+            </div>
+            <div class="dialog-buttons">
+                <button onclick="closeLoadGameDialog()" class="secondary-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden">
+        <div class="game-interface">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="collection-info">
+                    <h2 id="collection-title">My Collection</h2>
+                    <span id="last-saved">Last saved: Never</span>
+                </div>
+                <div class="top-controls">
+                    <div class="money-display">💰 $<span id="money-amount">250.00</span></div>
+                    <div class="coins-display">🪙 <span id="coins-amount">0</span> Coins</div>
+                    <button onclick="toggleFullscreen()" class="fullscreen-btn">🔳 Fullscreen</button>
+                    <button onclick="saveGame()" class="save-btn">💾 Save</button>
+                    <button onclick="showMainMenuGlobal()" class="menu-btn">🏠 Main Menu</button>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <!-- Left Sidebar - Plant Collection -->
+                <div class="plant-collection-panel">
+                    <h3>🌿 Your Plants</h3>
+                    <div class="plant-list" id="plant-list">
+                        <div class="empty-collection">
+                            <p>No plants yet!</p>
+                            <button onclick="openStore()" class="add-plant-btn">
+                                🛒 Visit Plant Store
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center - 3D Environment -->
+                <div class="simulator-panel">
+                    <div class="simulator-header">
+                        <h3>🌿 3D Plant Environment</h3>
+                        <div class="simulator-controls">
+                            <div class="movement-instructions">
+                                <span>WASD to move • Mouse to look • Click to interact</span>
+                            </div>
+                            <div class="environment-info">
+                                <span id="current-location">Greenhouse</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="simulator-display" id="simulator-display">
+                        <canvas id="three-canvas"></canvas>
+                        <div class="crosshair"></div>
+                        <div class="game-fullscreen-btn" id="game-fullscreen-btn" onclick="fullscreenGameWindow()">
+                            ⛶
+                        </div>
+                        <div class="interaction-prompt" id="interaction-prompt" style="display: none;">
+                            Press E to interact
+                        </div>
+                        <div class="tutorial-overlay" id="tutorial-overlay" style="display: block;">
+                            <div class="tutorial-content">
+                                <button onclick="closeTutorialManually()" style="position: absolute; top: 10px; right: 10px; background: red; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; z-index: 1000;">
+                                    ✕ CLOSE
+                                </button>
+                                <div class="tutorial-header">
+                                    <h3>🌿 Welcome to Carnivorous Plant Paradise!</h3>
+                                    <div class="exit-instruction">
+                                        <strong>📌 Click the red ✕ CLOSE button to start playing!</strong>
+                                    </div>
+                                </div>
+                                <div class="tutorial-scrollable">
+                                    <div class="tutorial-message" id="tutorial-message">
+                                        <h4>Getting Started</h4>
+                                        <p>You're standing in your empty greenhouse! Time to start your carnivorous plant collection.</p>
+                                        <p><strong>First step:</strong> Go outside and visit the stores to buy some carnivorous plants!</p>
+                                        
+                                        <h4>🎮 Movement Controls</h4>
+                                        <div class="control-list">
+                                            <p><strong>WASD or Arrow Keys</strong> - Move forward/back/left/right</p>
+                                            <p><strong>Mouse</strong> - Look around (after clicking in game window)</p>
+                                            <p><strong>Space</strong> - Jump</p>
+                                            <p><strong>Click</strong> - Enter mouse look mode</p>
+                                            <p><strong>Escape</strong> - Exit mouse look mode</p>
+                                        </div>
+                                        
+                                        <h4>🤝 Interaction Controls</h4>
+                                        <div class="control-list">
+                                            <p><strong>E</strong> - Enter stores, talk to NPCs, use teleports</p>
+                                            <p><strong>G</strong> - Grab/pick up plants, use items</p>
+                                            <p><strong>H</strong> - Show help menu</p>
+                                        </div>
+                                        
+                                        <h4>🛒 Shopping Instructions</h4>
+                                        <div class="control-list">
+                                            <p>1. Walk outside your greenhouse</p>
+                                            <p>2. Find the Plant Store building</p>
+                                            <p>3. Press <strong>E</strong> to enter the store</p>
+                                            <p>4. Walk up to plants and press <strong>G</strong> to examine them</p>
+                                            <p>5. Go to checkout counter and press <strong>G</strong> to buy</p>
+                                        </div>
+                                        
+                                        <h4>💰 Auto-Earning System</h4>
+                                        <div class="control-list">
+                                            <p>• You earn $0.01 every 0.1 seconds automatically!</p>
+                                            <p>• You earn 1 coin every 10 seconds for special services</p>
+                                            <p>• Visit the bank to manage your money</p>
+                                        </div>
+                                        
+                                        <h4>🏪 Available Stores</h4>
+                                        <div class="control-list">
+                                            <p>• Plant Store - Buy carnivorous plants</p>
+                                            <p>• Bank - Manage your finances</p>
+                                            <p>• Electronics Store - Climate control equipment</p>
+                                            <p>• Emergency Store - Safety equipment</p>
+                                            <p>• And 5 more specialized stores!</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tutorial-footer-fixed">
+                                    <strong>🚀 Click the red ✕ CLOSE button above to start exploring!</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="simulator-stats" id="simulator-stats">
+                        <div class="stats-panel">
+                            <h4>Environment Status</h4>
+                            <div class="stat-item">Temperature: <span id="env-temp">22°C</span></div>
+                            <div class="stat-item">Humidity: <span id="env-humidity">65%</span></div>
+                            <div class="stat-item">Light: <span id="env-light">Bright</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Plant Information -->
+                <div class="care-controls-panel">
+                    <h3>🌿 Plant Information</h3>
+                    <div class="control-groups" id="care-controls">
+                        <div class="control-group">
+                            <h4>Current Plant</h4>
+                            <div id="selected-plant-info">
+                                <p>Walk near a plant to see its information</p>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <h4>Available Actions</h4>
+                            <div id="available-actions">
+                                <p>Approach plants or interactive objects to see available actions</p>
+                            </div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <h4>Time & Day Cycle</h4>
+                            <div class="time-display">
+                                <span id="current-time">Day 1 - 8:00 AM</span>
+                            </div>
+                            <div class="day-cycle">
+                                <span id="sun-position">☀️ Midday Sun</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="script.js"></script>
+    <script>
+        // Initialize game when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Page loaded, initializing game...');
+            
+            // Test if PlantCollectionManager3D exists
+            if (typeof PlantCollectionManager3D !== 'undefined') {
+                console.log('✅ PlantCollectionManager3D found');
+                init();
+            } else {
+                console.error('❌ PlantCollectionManager3D not found!');
+                console.error('Check browser console for script loading errors');
+            }
+        });
+        
+        // Working 3D Game - COMPLETELY REWRITTEN
+        function startWorkingGame() {
+            console.log('🎮 Starting ENHANCED 3D Carnivorous Plants Paradise...');
+            
+            try {
+                // Show game screen
+                document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+                document.getElementById('game-screen').style.display = 'block';
+                
+                // Close tutorial
+                const tutorial = document.getElementById('tutorial-overlay');
+                if (tutorial) tutorial.style.display = 'none';
+                
+                // Create massive tropical island scene
+                const canvas = document.getElementById('three-canvas');
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x87CEEB); // Beautiful sky blue
+                scene.fog = new THREE.Fog(0x87CEEB, 50, 200); // Longer view distance
+                
+                const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 500);
+                camera.position.set(0, 2, 5);
+                
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                
+                // ENHANCED LIGHTING SYSTEM
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.7);
+                scene.add(ambientLight);
+                
+                const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                sunLight.position.set(50, 50, 25);
+                sunLight.castShadow = true;
+                sunLight.shadow.mapSize.width = 4096;
+                sunLight.shadow.mapSize.height = 4096;
+                scene.add(sunLight);
+                
+                // Warm lighting for tropical feel
+                const warmLight = new THREE.PointLight(0xffaa44, 0.5, 100);
+                warmLight.position.set(0, 20, 0);
+                scene.add(warmLight);
+                
+                // MASSIVE TROPICAL ISLAND (100x100 units!)
+                const islandGeometry = new THREE.PlaneGeometry(100, 100);
+                const islandMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5016 }); // Rich green
+                const island = new THREE.Mesh(islandGeometry, islandMaterial);
+                island.rotation.x = -Math.PI / 2;
+                island.receiveShadow = true;
+                scene.add(island);
+                
+                // BEAUTIFUL PATHWAYS
+                const pathMaterial = new THREE.MeshLambertMaterial({ color: 0xDEB887 }); // Sandy path
+                const mainPath = new THREE.Mesh(new THREE.PlaneGeometry(4, 80), pathMaterial);
+                mainPath.rotation.x = -Math.PI / 2;
+                mainPath.position.set(0, 0.01, 0);
+                scene.add(mainPath);
+                
+                // Cross paths for exploration
+                const crossPath1 = new THREE.Mesh(new THREE.PlaneGeometry(60, 3), pathMaterial);
+                crossPath1.rotation.x = -Math.PI / 2;
+                crossPath1.position.set(0, 0.01, -20);
+                scene.add(crossPath1);
+                
+                const crossPath2 = new THREE.Mesh(new THREE.PlaneGeometry(60, 3), pathMaterial);
+                crossPath2.rotation.x = -Math.PI / 2;
+                crossPath2.position.set(0, 0.01, 20);
+                scene.add(crossPath2);
+                
+                // MULTIPLE GREENHOUSE STRUCTURES
+                const createGreenhouse = (x, z, width, depth, color) => {
+                    const glassMaterial = new THREE.MeshLambertMaterial({ 
+                        color: color, 
+                        transparent: true, 
+                        opacity: 0.3 
+                    });
+                    
+                    // Greenhouse frame
+                    const frameMaterial = new THREE.MeshLambertMaterial({ color: 0x2d5016 });
+                    
+                    // Walls
+                    const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(width, 6), glassMaterial);
+                    frontWall.position.set(x, 3, z + depth/2);
+                    scene.add(frontWall);
+                    
+                    const backWall = new THREE.Mesh(new THREE.PlaneGeometry(width, 6), glassMaterial);
+                    backWall.position.set(x, 3, z - depth/2);
+                    backWall.rotation.y = Math.PI;
+                    scene.add(backWall);
+                    
+                    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(depth, 6), glassMaterial);
+                    leftWall.position.set(x - width/2, 3, z);
+                    leftWall.rotation.y = Math.PI / 2;
+                    scene.add(leftWall);
+                    
+                    const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(depth, 6), glassMaterial);
+                    rightWall.position.set(x + width/2, 3, z);
+                    rightWall.rotation.y = -Math.PI / 2;
+                    scene.add(rightWall);
+                    
+                    // Frame posts
+                    for (let i = 0; i <= 4; i++) {
+                        const post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 6, 0.3), frameMaterial);
+                        post.position.set(x - width/2 + i * width/4, 3, z - depth/2);
+                        post.castShadow = true;
+                        scene.add(post);
+                    }
+                };
+                
+                // Create 5 different greenhouses
+                createGreenhouse(0, -25, 20, 15, 0xccffcc);     // Main greenhouse (green tint)
+                createGreenhouse(-30, -10, 15, 12, 0xffcccc);   // Pink tint
+                createGreenhouse(30, -10, 15, 12, 0xccccff);    // Blue tint
+                createGreenhouse(-20, 25, 12, 10, 0xffffcc);    // Yellow tint
+                createGreenhouse(20, 25, 12, 10, 0xffccff);     // Purple tint
+                
+                // TROPICAL PALM TREES for atmosphere
+                const createPalmTree = (x, z) => {
+                    // Trunk
+                    const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.5, 8, 8);
+                    const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                    const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                    trunk.position.set(x, 4, z);
+                    trunk.castShadow = true;
+                    scene.add(trunk);
+                    
+                    // Palm fronds
+                    for (let i = 0; i < 8; i++) {
+                        const frondGeometry = new THREE.PlaneGeometry(1, 6);
+                        const frondMaterial = new THREE.MeshLambertMaterial({ 
+                            color: 0x228B22, 
+                            side: THREE.DoubleSide 
+                        });
+                        const frond = new THREE.Mesh(frondGeometry, frondMaterial);
+                        frond.position.set(x, 8, z);
+                        frond.rotation.y = (i / 8) * Math.PI * 2;
+                        frond.rotation.x = -0.3;
+                        scene.add(frond);
+                    }
+                };
+                
+                // Add palm trees around the island
+                for (let i = 0; i < 15; i++) {
+                    const x = (Math.random() - 0.5) * 80;
+                    const z = (Math.random() - 0.5) * 80;
+                    if (Math.abs(x) > 15 || Math.abs(z) > 15) { // Don't place in center area
+                        createPalmTree(x, z);
+                    }
+                }
+                
+                // MASSIVE PLANT COLLECTION
+                const plantColors = [
+                    0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff,
+                    0xff8844, 0x88ff44, 0x4488ff, 0xff4488, 0x88ff88, 0x8844ff
+                ];
+                
+                // Central display area with organized plant stations
+                const createPlantStation = (centerX, centerZ, stationSize) => {
+                    // Station platform
+                    const platformGeometry = new THREE.CylinderGeometry(stationSize, stationSize, 0.2, 8);
+                    const platformMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                    const platform = new THREE.Mesh(platformGeometry, platformMaterial);
+                    platform.position.set(centerX, 0.1, centerZ);
+                    platform.castShadow = true;
+                    scene.add(platform);
+                    
+                    // Pots on the platform
+                    const potCount = Math.floor(stationSize * 2);
+                    for (let i = 0; i < potCount; i++) {
+                        const angle = (i / potCount) * Math.PI * 2;
+                        const radius = stationSize * 0.7;
+                        const potX = centerX + Math.cos(angle) * radius;
+                        const potZ = centerZ + Math.sin(angle) * radius;
+                        
+                        const potSize = 0.15 + Math.random() * 0.15;
+                        const pot = new THREE.Mesh(
+                            new THREE.CylinderGeometry(potSize, potSize * 0.8, potSize * 1.5),
+                            new THREE.MeshLambertMaterial({ color: plantColors[i % plantColors.length] })
+                        );
+                        
+                        pot.position.set(potX, 0.3 + potSize * 0.75, potZ);
+                        pot.userData = { 
+                            type: 'carnivorous_plant',
+                            species: ['dionaea', 'nepenthes', 'sarracenia', 'drosera'][i % 4],
+                            originalColor: plantColors[i % plantColors.length],
+                            interactable: true,
+                            canKnockOver: true
+                        };
+                        pot.castShadow = true;
+                        scene.add(pot);
+                        
+                        // Add realistic carnivorous plant inside pot
+                        const createRealisticPlant = (species, potX, potY, potZ, potSize) => {
+                            const plantGroup = new THREE.Group();
+                            
+                            switch(species) {
+                                case 'dionaea': // Venus Flytrap
+                                    // Multiple traps
+                                    for (let t = 0; t < 3; t++) {
+                                        const trapGroup = new THREE.Group();
+                                        
+                                        // Trap lobes (mouth)
+                                        const lobe1 = new THREE.Mesh(
+                                            new THREE.SphereGeometry(potSize * 0.3, 8, 6),
+                                            new THREE.MeshLambertMaterial({ color: 0x90EE90 })
+                                        );
+                                        lobe1.scale.set(1, 0.3, 1.5);
+                                        
+                                        const lobe2 = new THREE.Mesh(
+                                            new THREE.SphereGeometry(potSize * 0.3, 8, 6),
+                                            new THREE.MeshLambertMaterial({ color: 0xFF69B4 })
+                                        );
+                                        lobe2.scale.set(1, 0.3, 1.5);
+                                        lobe2.position.y = potSize * 0.2;
+                                        
+                                        // Trigger hairs
+                                        for (let h = 0; h < 3; h++) {
+                                            const hair = new THREE.Mesh(
+                                                new THREE.CylinderGeometry(0.005, 0.005, potSize * 0.4, 3),
+                                                new THREE.MeshLambertMaterial({ color: 0x000000 })
+                                            );
+                                            hair.position.set((h-1) * potSize * 0.1, potSize * 0.1, 0);
+                                            trapGroup.add(hair);
+                                        }
+                                        
+                                        trapGroup.add(lobe1);
+                                        trapGroup.add(lobe2);
+                                        
+                                        // Position traps around pot
+                                        const angle = (t / 3) * Math.PI * 2;
+                                        trapGroup.position.set(
+                                            Math.cos(angle) * potSize * 0.3,
+                                            0,
+                                            Math.sin(angle) * potSize * 0.3
+                                        );
+                                        plantGroup.add(trapGroup);
+                                    }
+                                    break;
+                                    
+                                case 'nepenthes': // Pitcher Plant
+                                    // Vine
+                                    const vine = new THREE.Mesh(
+                                        new THREE.CylinderGeometry(0.01, 0.02, potSize * 2, 6),
+                                        new THREE.MeshLambertMaterial({ color: 0x228B22 })
+                                    );
+                                    vine.position.y = potSize;
+                                    plantGroup.add(vine);
+                                    
+                                    // Hanging pitcher
+                                    const pitcher = new THREE.Mesh(
+                                        new THREE.CylinderGeometry(potSize * 0.25, potSize * 0.35, potSize * 0.8, 8),
+                                        new THREE.MeshLambertMaterial({ color: 0x8B0000 })
+                                    );
+                                    pitcher.position.set(potSize * 0.4, potSize * 1.2, 0);
+                                    
+                                    // Pitcher lid
+                                    const lid = new THREE.Mesh(
+                                        new THREE.SphereGeometry(potSize * 0.3, 8, 6),
+                                        new THREE.MeshLambertMaterial({ color: 0x90EE90 })
+                                    );
+                                    lid.scale.set(1, 0.3, 1);
+                                    lid.position.set(potSize * 0.4, potSize * 1.6, 0);
+                                    
+                                    plantGroup.add(pitcher);
+                                    plantGroup.add(lid);
+                                    break;
+                                    
+                                case 'sarracenia': // Trumpet Pitcher
+                                    const trumpet = new THREE.Mesh(
+                                        new THREE.CylinderGeometry(potSize * 0.15, potSize * 0.25, potSize * 1.5, 8),
+                                        new THREE.MeshLambertMaterial({ color: 0x800080 })
+                                    );
+                                    trumpet.position.y = potSize * 0.75;
+                                    
+                                    // Hood
+                                    const hood = new THREE.Mesh(
+                                        new THREE.SphereGeometry(potSize * 0.2, 8, 6),
+                                        new THREE.MeshLambertMaterial({ color: 0xFF0000 })
+                                    );
+                                    hood.scale.set(1, 0.4, 1);
+                                    hood.position.y = potSize * 1.4;
+                                    
+                                    plantGroup.add(trumpet);
+                                    plantGroup.add(hood);
+                                    break;
+                                    
+                                case 'drosera': // Sundew
+                                default:
+                                    // Central rosette
+                                    for (let l = 0; l < 8; l++) {
+                                        const leaf = new THREE.Mesh(
+                                            new THREE.PlaneGeometry(potSize * 0.8, potSize * 0.1),
+                                            new THREE.MeshLambertMaterial({ 
+                                                color: 0x32CD32,
+                                                side: THREE.DoubleSide 
+                                            })
+                                        );
+                                        
+                                        const angle = (l / 8) * Math.PI * 2;
+                                        leaf.position.set(
+                                            Math.cos(angle) * potSize * 0.3,
+                                            potSize * 0.1,
+                                            Math.sin(angle) * potSize * 0.3
+                                        );
+                                        leaf.rotation.y = angle;
+                                        leaf.rotation.x = -0.3;
+                                        
+                                        // Dewdrops (tentacles)
+                                        for (let d = 0; d < 5; d++) {
+                                            const dewdrop = new THREE.Mesh(
+                                                new THREE.SphereGeometry(0.02, 4, 4),
+                                                new THREE.MeshLambertMaterial({ 
+                                                    color: 0x00CED1,
+                                                    transparent: true,
+                                                    opacity: 0.8
+                                                })
+                                            );
+                                            dewdrop.position.set(
+                                                Math.cos(angle) * potSize * (0.2 + d * 0.1),
+                                                potSize * 0.15,
+                                                Math.sin(angle) * potSize * (0.2 + d * 0.1)
+                                            );
+                                            plantGroup.add(dewdrop);
+                                        }
+                                        
+                                        plantGroup.add(leaf);
+                                    }
+                                    break;
+                            }
+                            
+                            plantGroup.position.set(potX, potY + potSize * 0.8, potZ);
+                            return plantGroup;
+                        };
+                        
+                        const realisticPlant = createRealisticPlant(
+                            pot.userData.species, 
+                            potX, 
+                            0.3, 
+                            potZ, 
+                            potSize
+                        );
+                        scene.add(realisticPlant);
+                    }
+                };
+                
+                // Create multiple plant stations
+                createPlantStation(0, 0, 4);     // Central large station
+                createPlantStation(-15, -15, 3); // Southwest station
+                createPlantStation(15, -15, 3);  // Southeast station
+                createPlantStation(-15, 15, 3);  // Northwest station
+                createPlantStation(15, 15, 3);   // Northeast station
+                createPlantStation(0, -30, 2);   // South station
+                createPlantStation(0, 30, 2);    // North station
+                
+                // INTERACTIVE FEATURES
+                // Water features
+                const waterGeometry = new THREE.CylinderGeometry(8, 8, 0.5, 16);
+                const waterMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x4488ff, 
+                    transparent: true, 
+                    opacity: 0.7 
+                });
+                const pond = new THREE.Mesh(waterGeometry, waterMaterial);
+                pond.position.set(-25, 0.25, 0);
+                scene.add(pond);
+                
+                // Decorative rocks around pond
+                for (let i = 0; i < 12; i++) {
+                    const rockGeometry = new THREE.SphereGeometry(0.5 + Math.random() * 0.5, 6, 6);
+                    const rockMaterial = new THREE.MeshLambertMaterial({ color: 0x666666 });
+                    const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+                    const angle = (i / 12) * Math.PI * 2;
+                    rock.position.set(
+                        -25 + Math.cos(angle) * 9,
+                        0.3,
+                        Math.sin(angle) * 9
+                    );
+                    scene.add(rock);
+                }
+                
+                // SIMPLE POND (fixed positioning to avoid glitches)
+                const pondGeometry = new THREE.CylinderGeometry(5, 5, 0.1, 16);
+                const pondMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x4488ff, 
+                    transparent: true, 
+                    opacity: 0.9 
+                });
+                const simplePond = new THREE.Mesh(pondGeometry, pondMaterial);
+                simplePond.position.set(15, 0.05, 15); // Slightly above ground to avoid z-fighting
+                simplePond.userData = { type: 'pond', interactable: true, name: 'Simple Pond' };
+                scene.add(simplePond);
+                
+                console.log('✅ Simple pond created successfully!');
+                
+                // SIMPLE DIVING MECHANICS (no complex objects - just camera movement)
+                let isInWater = false;
+                const waterLevel = 0; // Surface level of pond
+                const pondCenter = new THREE.Vector3(15, 0, 15);
+                const pondRadius = 8; // Larger radius for easier detection
+                
+                function checkWaterDiving() {
+                    const playerPos = camera.position;
+                    const distanceToPond = Math.sqrt((playerPos.x - pondCenter.x) ** 2 + (playerPos.z - pondCenter.z) ** 2);
+                    
+                    // Check if player is within pond area
+                    if (distanceToPond <= pondRadius) {
+                        if (!isInWater) {
+                            isInWater = true;
+                            console.log('💧 ENTERED WATER! Look up/down to dive!');
+                            scene.fog.color.setHex(0x4477aa); // More obvious blue tint
+                        }
+                        
+                        if (isInWater && !flyMode && !isDead) {
+                            // Get camera's look direction
+                            const lookDirection = new THREE.Vector3();
+                            camera.getWorldDirection(lookDirection);
+                            
+                            // If looking down, dive down
+                            if (lookDirection.y < -0.1) { // More sensitive
+                                playerPos.y -= 0.1; // Faster descent
+                                if (Math.random() < 0.05) console.log('⬇️ Diving...');
+                            }
+                            // If looking up, surface
+                            else if (lookDirection.y > 0.1) { // More sensitive
+                                playerPos.y += 0.1; // Faster ascent
+                                if (Math.random() < 0.05) console.log('⬆️ Surfacing...');
+                            }
+                            
+                            // Limit diving depth
+                            if (playerPos.y < -20) {
+                                playerPos.y = -20;
+                                console.log('🌊 Hit ocean floor!');
+                            }
+                            
+                            // Prevent going too high above water
+                            if (playerPos.y > waterLevel + 5) {
+                                playerPos.y = waterLevel + 5;
+                            }
+                        }
+                    } else if (isInWater) {
+                        // Left pond area
+                        isInWater = false;
+                        console.log('🏖️ LEFT WATER AREA!');
+                        scene.fog.color.setHex(0x87CEEB); // Restore original sky color
+                        
+                        // Surface if underwater
+                        if (playerPos.y < waterLevel) {
+                            playerPos.y = waterLevel + 1;
+                            console.log('🏄‍♀️ Auto-surfaced!');
+                        }
+                    }
+                }
+                
+                // WORKING CONTROLS WITH PHYSICS
+                let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+                let isLocked = false;
+                let isCrouching = false, isSprinting = false, isJumping = false;
+                let playerVelocity = { x: 0, y: 0, z: 0 };
+                
+                // FLY MODE CONTROLS
+                let flyMode = false;
+                let flyHeight = 0;
+                const maxFlyHeight = 50; // Maximum altitude
+                const fallDamageHeight = 10; // Height that causes fall damage
+                let isDead = false;
+                
+                // Mouse lock controls
+                const controls = new THREE.PointerLockControls(camera, document.body);
+                scene.add(controls.getObject());
+                
+                controls.addEventListener('lock', () => {
+                    console.log('✅ Mouse locked!');
+                    isLocked = true;
+                    canvas.style.cursor = 'none';
+                });
+                
+                controls.addEventListener('unlock', () => {
+                    console.log('❌ Mouse unlocked');
+                    isLocked = false;
+                    canvas.style.cursor = 'crosshair';
+                });
+                
+                // Click to lock
+                canvas.addEventListener('click', () => {
+                    console.log('🖱️ Requesting pointer lock...');
+                    controls.lock();
+                });
+                
+                // Enhanced object interaction with debugging
+                function findNearestObject(playerPos, scene) {
+                    let nearest = null;
+                    let minDistance = 8; // Increased grab range for stores/NPCs
+                    
+                    console.log('🔍 Looking for objects near position:', 
+                        playerPos.x.toFixed(1), playerPos.y.toFixed(1), playerPos.z.toFixed(1));
+                    
+                    scene.children.forEach(child => {
+                        if (child.userData?.interactable) {
+                            const distance = playerPos.distanceTo(child.position);
+                            console.log(`📦 Found ${child.userData.type}: ${child.userData.name || 'unnamed'}`, 
+                                'at distance:', distance.toFixed(1),
+                                'position:', child.position.x.toFixed(1), child.position.y.toFixed(1), child.position.z.toFixed(1));
+                            
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                                nearest = child;
+                            }
+                        }
+                    });
+                    
+                    if (nearest) {
+                        console.log('✅ Nearest object:', nearest.userData.type, nearest.userData.name || 'unnamed', 'distance:', minDistance.toFixed(1));
+                    } else {
+                        console.log('❌ No objects within range of', minDistance);
+                    }
+                    
+                    return nearest;
+                }
+                
+                // FIXED KEYBOARD CONTROLS
+                document.addEventListener('keydown', (e) => {
+                    console.log('🔥 KEY PRESSED:', e.code, 'Mouse locked:', isLocked);
+                    
+                    if (!isLocked) return;
+                    
+                    switch(e.code) {
+                        case 'KeyW': case 'ArrowUp': 
+                            moveForward = true; 
+                            console.log('🔼 Moving forward');
+                            break;
+                        case 'KeyS': case 'ArrowDown': 
+                            moveBackward = true; 
+                            console.log('🔽 Moving backward');
+                            break;
+                        case 'KeyA': case 'ArrowLeft': 
+                            moveLeft = true; 
+                            console.log('◀️ Moving left');
+                            break;
+                        case 'KeyD': case 'ArrowRight': 
+                            moveRight = true; 
+                            console.log('▶️ Moving right');
+                            break;
+                        case 'Space':
+                            e.preventDefault();
+                            if (flyMode) {
+                                // In fly mode, space always goes up - NO JUMPING PHYSICS
+                                console.log('🚀 Flying up with Space!');
+                                camera.position.y += 0.3;
+                                flyHeight = camera.position.y;
+                                if (camera.position.y > maxFlyHeight) {
+                                    camera.position.y = maxFlyHeight;
+                                    flyHeight = maxFlyHeight;
+                                }
+                                // IMPORTANT: Don't set isJumping in fly mode
+                            } else if (!isJumping) {
+                                console.log('🦘 JUMPING!');
+                                isJumping = true;
+                                playerVelocity.y = 0.6; // Higher jump - was 0.4
+                            }
+                            break;
+                        case 'CapsLock':
+                            e.preventDefault();
+                            flyMode = !flyMode;
+                            if (flyMode) {
+                                console.log('🚀🚀🚀 FLY MODE ON! 🚀🚀🚀');
+                                console.log('Height:', camera.position.y);
+                                flyHeight = camera.position.y;
+                                maxFallHeight = camera.position.y;
+                                // COMPLETELY STOP ALL PHYSICS IN FLY MODE
+                                isJumping = false;
+                                playerVelocity.y = 0;
+                                playerVelocity.x = 0;
+                                playerVelocity.z = 0;
+                            } else {
+                                console.log('💥💥💥 FLY MODE OFF - RESTORING NORMAL PHYSICS! 💥💥💥');
+                                console.log('Starting fall from height:', camera.position.y);
+                                maxFallHeight = camera.position.y;
+                                
+                                // RESTORE NORMAL PHYSICS - start falling if high up
+                                if (camera.position.y > 3) {
+                                    isJumping = true;
+                                    playerVelocity.y = -0.3; // Fast fall from height
+                                } else {
+                                    // On ground - restore normal state
+                                    isJumping = false;
+                                    playerVelocity.y = 0;
+                                }
+                            }
+                            break;
+                        case 'KeyG':
+                            console.log('🤏 GRAB/INTERACT ACTION!');
+                            const nearestObject = findNearestObject(camera.position, scene);
+                            if (nearestObject) {
+                                console.log('📦 Grabbed:', nearestObject.userData.type);
+                                nearestObject.material.color.setHex(0xffffff);
+                                
+                                // Create grab effect
+                                const grabEffect = new THREE.Mesh(
+                                    new THREE.SphereGeometry(0.1),
+                                    new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+                                );
+                                grabEffect.position.copy(nearestObject.position);
+                                grabEffect.position.y += 0.5;
+                                scene.add(grabEffect);
+                                
+                                setTimeout(() => {
+                                    if (nearestObject.userData.originalColor) {
+                                        nearestObject.material.color.setHex(nearestObject.userData.originalColor);
+                                    }
+                                    scene.remove(grabEffect);
+                                }, 1000);
+                            } else {
+                                console.log('❌ No objects in range');
+                            }
+                            break;
+                        case 'KeyQ':
+                            console.log('🗡️ SWIPE ACTION!');
+                            
+                            // Create 3D stick hand extending from camera
+                            const stickGeometry = new THREE.CylinderGeometry(0.05, 0.03, 3, 8);
+                            const stickMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                            const stickHand = new THREE.Mesh(stickGeometry, stickMaterial);
+                            
+                            // Position stick in front of camera
+                            const swipeDirection = new THREE.Vector3(0, 0, -1);
+                            swipeDirection.applyQuaternion(camera.quaternion);
+                            
+                            stickHand.position.copy(camera.position);
+                            stickHand.position.add(swipeDirection.clone().multiplyScalar(2));
+                            stickHand.position.y -= 0.3; // Lower than camera
+                            
+                            // Orient stick towards target
+                            stickHand.lookAt(
+                                camera.position.x + swipeDirection.x * 4,
+                                camera.position.y,
+                                camera.position.z + swipeDirection.z * 4
+                            );
+                            stickHand.rotateZ(Math.PI / 2); // Horizontal orientation
+                            
+                            scene.add(stickHand);
+                            console.log('🦾 3D Stick hand extended!');
+                            
+                            // Find and affect nearby objects
+                            const nearbyObjects = [];
+                            scene.children.forEach(child => {
+                                if (child.userData?.canKnockOver) {
+                                    const distance = camera.position.distanceTo(child.position);
+                                    if (distance < 4) { // Increased range
+                                        nearbyObjects.push(child);
+                                    }
+                                }
+                            });
+                            
+                            if (nearbyObjects.length > 0) {
+                                console.log('💥 Swiped', nearbyObjects.length, 'objects!');
+                                nearbyObjects.forEach(obj => {
+                                    obj.material.color.setHex(0xff0000);
+                                    
+                                    // Realistic knock over effect
+                                    const knockDirection = new THREE.Vector3();
+                                    knockDirection.subVectors(obj.position, camera.position).normalize();
+                                    
+                                    obj.rotation.z = (Math.random() - 0.5) * Math.PI / 3;
+                                    obj.position.x += knockDirection.x * 0.5;
+                                    obj.position.z += knockDirection.z * 0.5;
+                                    obj.position.y -= 0.1;
+                                    
+                                    setTimeout(() => {
+                                        obj.material.color.setHex(obj.userData.originalColor);
+                                    }, 800);
+                                });
+                            } else {
+                                console.log('🌬️ Swipe missed!');
+                            }
+                            
+                            // Animate stick swipe and removal
+                            setTimeout(() => {
+                                scene.remove(stickHand);
+                                console.log('🦾 Stick hand retracted');
+                            }, 800);
+                            break;
+                        case 'KeyC':
+                            isCrouching = !isCrouching;
+                            if (isCrouching) {
+                                console.log('🦆 Crouching');
+                                camera.position.y = 1.2;
+                            } else {
+                                console.log('🧍 Standing');
+                                camera.position.y = 2;
+                            }
+                            break;
+                        case 'ShiftLeft': case 'ShiftRight':
+                            if (!isSprinting) {
+                                console.log('🏃‍♂️ Sprinting!');
+                                isSprinting = true;
+                            }
+                            break;
+                        case 'Escape': 
+                            if (isLocked) controls.unlock(); 
+                            break;
+                    }
+                });
+                
+                document.addEventListener('keyup', (e) => {
+                    switch(e.code) {
+                        case 'KeyW': case 'ArrowUp': moveForward = false; break;
+                        case 'KeyS': case 'ArrowDown': moveBackward = false; break;
+                        case 'KeyA': case 'ArrowLeft': moveLeft = false; break;
+                        case 'KeyD': case 'ArrowRight': moveRight = false; break;
+                        case 'ShiftLeft': case 'ShiftRight':
+                            console.log('🚶‍♂️ Stopped sprinting');
+                            isSprinting = false;
+                            break;
+                    }
+                });
+                
+                // WORKING BOUNDARY COLLISION
+                function checkBoundaries(position) {
+                    const boundary = 48; // Keep within island
+                    let hitBoundary = false;
+                    
+                    if (position.x > boundary) { position.x = boundary; hitBoundary = true; }
+                    if (position.x < -boundary) { position.x = -boundary; hitBoundary = true; }
+                    if (position.z > boundary) { position.z = boundary; hitBoundary = true; }
+                    if (position.z < -boundary) { position.z = -boundary; hitBoundary = true; }
+                    
+                    if (hitBoundary) {
+                        console.log('🚧 Hit island boundary!');
+                    }
+                    
+                    return hitBoundary;
+                }
+                
+                // FALL DAMAGE AND DEATH SYSTEM
+                let maxFallHeight = 0;
+                
+                function handleFallDamage() {
+                    const currentHeight = camera.position.y;
+                    const groundLevel = 2;
+                    
+                    // Track maximum height during fall
+                    if (!flyMode && isJumping && playerVelocity.y < 0) {
+                        maxFallHeight = Math.max(maxFallHeight, currentHeight);
+                    }
+                    
+                    // Check if just landed from dangerous height
+                    if (!flyMode && isJumping && currentHeight <= groundLevel && playerVelocity.y < 0) {
+                        const fallDistance = maxFallHeight - groundLevel;
+                        console.log(`Fall distance: ${fallDistance.toFixed(1)} units`);
+                        
+                        if (fallDistance > fallDamageHeight) {
+                            // Death from fall damage - only when actually hitting ground
+                            isDead = true;
+                            maxFallHeight = 0; // Reset
+                            console.log('💀 FATAL FALL ON IMPACT!');
+                            
+                            // Black screen with red "oops" text
+                            document.body.style.background = 'black';
+                            const oopsDiv = document.createElement('div');
+                            oopsDiv.style.position = 'fixed';
+                            oopsDiv.style.top = '50%';
+                            oopsDiv.style.left = '50%';
+                            oopsDiv.style.transform = 'translate(-50%, -50%)';
+                            oopsDiv.style.color = 'red';
+                            oopsDiv.style.fontSize = '3em';
+                            oopsDiv.style.fontWeight = 'bold';
+                            oopsDiv.style.zIndex = '10000';
+                            oopsDiv.style.textAlign = 'center';
+                            oopsDiv.innerHTML = '*oops.<br>try not to go so high next time!*';
+                            document.body.appendChild(oopsDiv);
+                            
+                            // Respawn after 3 seconds
+                            setTimeout(() => {
+                                document.body.removeChild(oopsDiv);
+                                document.body.style.background = '';
+                                camera.position.set(0, 2, 5); // Respawn at start
+                                flyHeight = 2;
+                                maxFallHeight = 0;
+                                isDead = false;
+                                flyMode = false;
+                                isJumping = false;
+                                playerVelocity.y = 0;
+                                console.log('♻️ Respawned!');
+                            }, 3000);
+                        } else {
+                            maxFallHeight = 0; // Reset for next fall
+                        }
+                    }
+                    
+                    // Reset fall height when on ground and not falling
+                    if (currentHeight <= groundLevel && !isJumping) {
+                        maxFallHeight = 0;
+                    }
+                }
+                
+                // FLY MODE MECHANICS
+                function handleFlyMode() {
+                    if (flyMode && !isDead) {
+                        // Get camera's look direction for fly controls
+                        const lookDirection = new THREE.Vector3();
+                        camera.getWorldDirection(lookDirection);
+                        
+                        // If looking up significantly, fly up
+                        if (lookDirection.y > 0.2) { // Looking up
+                            flyHeight += 0.06; // Faster ascent
+                            camera.position.y += 0.06;
+                            if (Math.random() < 0.02) console.log('⬆️ Flying up...');
+                        }
+                        // If looking down significantly, fly down (but don't fall)
+                        else if (lookDirection.y < -0.2) { // Looking down
+                            flyHeight -= 0.06; // Faster descent
+                            camera.position.y -= 0.06;
+                            if (Math.random() < 0.02) console.log('⬇️ Flying down...');
+                        }
+                        
+                        // Limit altitude
+                        if (camera.position.y > maxFlyHeight) {
+                            camera.position.y = maxFlyHeight;
+                            flyHeight = maxFlyHeight;
+                        }
+                        if (camera.position.y < 2) {
+                            camera.position.y = 2;
+                            flyHeight = 2;
+                        }
+                    }
+                }
+                
+                // ENHANCED ANIMATION LOOP
+                function animate() {
+                    requestAnimationFrame(animate);
+                    
+                    if (!isDead) {
+                        // Check diving mechanics (simple camera-only movement)
+                        checkWaterDiving();
+                        
+                        // Handle fly mode mechanics
+                        handleFlyMode();
+                        
+                        // DEBUG: Show current status every 2 seconds
+                        if (Date.now() % 2000 < 16) { // Roughly every 2 seconds
+                            const distToPond = Math.sqrt((camera.position.x - 15) ** 2 + (camera.position.z - 15) ** 2);
+                            console.log(`STATUS: Fly=${flyMode}, Jump=${isJumping}, Y=${camera.position.y.toFixed(1)}, VelY=${playerVelocity.y.toFixed(2)}`);
+                            console.log(`POSITION: (${camera.position.x.toFixed(1)}, ${camera.position.y.toFixed(1)}, ${camera.position.z.toFixed(1)}) - Pond dist: ${distToPond.toFixed(1)}`);
+                        }
+                        
+                        if (isLocked) {
+                            // Store previous position
+                            const prevPosition = camera.position.clone();
+                            
+                            if (flyMode) {
+                                // FLY MODE MOVEMENT - COMPLETELY OVERRIDE PHYSICS
+                                let speed = 0.2; // Slightly faster flying
+                                if (isSprinting) speed = 0.3;
+                                
+                                // Apply movement
+                                if (moveForward) controls.moveForward(speed);
+                                if (moveBackward) controls.moveForward(-speed);
+                                if (moveLeft) controls.moveRight(-speed);
+                                if (moveRight) controls.moveRight(speed);
+                                
+                                // COMPLETELY DISABLE ALL PHYSICS IN FLY MODE - EVERY FRAME
+                                isJumping = false;
+                                playerVelocity.y = 0;
+                                playerVelocity.x = 0;
+                                playerVelocity.z = 0;
+                                
+                                // Update fly height tracking
+                                flyHeight = camera.position.y;
+                                
+                                // SKIP ALL NORMAL PHYSICS BELOW
+                                
+                            } else {
+                                // NORMAL GROUND MOVEMENT
+                                let speed = 0.15; // Base speed
+                                if (isCrouching) speed = 0.08;
+                                else if (isSprinting) speed = 0.25;
+                                
+                                // Apply movement
+                                if (moveForward) controls.moveForward(speed);
+                                if (moveBackward) controls.moveForward(-speed);
+                                if (moveLeft) controls.moveRight(-speed);
+                                if (moveRight) controls.moveRight(speed);
+                                
+                                // Handle jumping with proper physics
+                                if (isJumping) {
+                                    camera.position.y += playerVelocity.y;
+                                    
+                                    // Different gravity for normal jumps vs fast falling from fly mode
+                                    if (playerVelocity.y < -0.1) {
+                                        // Fast falling (from fly mode exit)
+                                        playerVelocity.y -= 0.12; // Very fast gravity for falling
+                                    } else {
+                                        // Normal jumping
+                                        playerVelocity.y -= 0.035; // Moderate gravity for normal jumps
+                                    }
+                                    
+                                    // Land when hitting ground or going below
+                                    const groundLevel = isCrouching ? 1.2 : 2;
+                                    if (camera.position.y <= groundLevel) {
+                                        camera.position.y = groundLevel;
+                                        playerVelocity.y = 0;
+                                        isJumping = false;
+                                        console.log('🔽 Landed!');
+                                    }
+                                }
+                                
+                                // Check for fall damage
+                                handleFallDamage();
+                            }
+                            
+                            // Boundary collision
+                            checkBoundaries(camera.position);
+                        }
+                    }
+                    
+                    renderer.render(scene, camera);
+                }
+                
+                animate();
+                
+                console.log('✅ ENHANCED 3D Carnivorous Plants Paradise loaded!');
+                console.log('🎮 Controls: WASD=Move, Space=Jump, G=Grab, Q=Swipe, C=Crouch, Shift=Sprint');
+                console.log('✈️ FLY MODE: Press Caps Lock to toggle fly mode. Look up/down to fly, Space=Up');
+                console.log('⚠️ WARNING: FAST fall damage! If you fall from high altitude, you\'ll die and respawn!');
+                console.log('🌴 Explore the massive tropical island with 5 greenhouses!');
+                console.log('🏊‍♀️ DIVING: Go to pond at (15,15) and look down to dive, look up to surface!');
+                
+            } catch (error) {
+                console.error('❌ Game failed:', error);
+            }
+        }
+        
+        // Minimal 3D test
+        function testMinimal3D() {
+            console.log('🔴 Starting minimal 3D test...');
+            
+            try {
+                // Show game screen
+                document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+                document.getElementById('game-screen').style.display = 'block';
+                
+                // Get canvas
+                const canvas = document.getElementById('three-canvas');
+                console.log('Canvas found:', !!canvas);
+                
+                // Create scene
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xff0000); // RED background to test
+                console.log('Scene created');
+                
+                // Create camera
+                const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+                camera.position.z = 5;
+                console.log('Camera created');
+                
+                // Create renderer
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+                renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+                console.log('Renderer created');
+                
+                // Create a simple cube
+                const geometry = new THREE.BoxGeometry();
+                const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // GREEN cube
+                const cube = new THREE.Mesh(geometry, material);
+                scene.add(cube);
+                console.log('Cube added');
+                
+                // Render once
+                renderer.render(scene, camera);
+                console.log('✅ Minimal 3D test complete! You should see a red screen with green cube.');
+                
+                // Store globally for testing
+                window.testScene = { scene, camera, renderer, cube, canvas };
+                
+            } catch (error) {
+                console.error('❌ Minimal 3D test failed:', error);
+            }
+        }
+    </script>
+</body>
+</html>

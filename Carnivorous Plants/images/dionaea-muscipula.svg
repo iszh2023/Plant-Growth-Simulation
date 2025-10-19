@@ -1,0 +1,61 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="trapGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#90ee90;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#228b22;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#006400;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="trapRed" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff69b4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#dc143c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b0000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f0fff0"/>
+  
+  <!-- Central rosette base -->
+  <ellipse cx="200" cy="200" rx="60" ry="30" fill="#228b22" opacity="0.3"/>
+  
+  <!-- Venus flytrap leaves/petioles -->
+  <ellipse cx="150" cy="180" rx="8" ry="40" fill="url(#trapGreen)" transform="rotate(-30 150 180)"/>
+  <ellipse cx="180" cy="160" rx="8" ry="35" fill="url(#trapGreen)" transform="rotate(10 180 160)"/>
+  <ellipse cx="220" cy="160" rx="8" ry="35" fill="url(#trapGreen)" transform="rotate(-10 220 160)"/>
+  <ellipse cx="250" cy="180" rx="8" ry="40" fill="url(#trapGreen)" transform="rotate(30 250 180)"/>
+  <ellipse cx="200" cy="140" rx="8" ry="30" fill="url(#trapGreen)"/>
+  
+  <!-- Venus flytrap traps -->
+  <!-- Trap 1 (open) -->
+  <ellipse cx="130" cy="140" rx="18" ry="12" fill="url(#trapRed)" transform="rotate(-45 130 140)"/>
+  <ellipse cx="125" cy="135" rx="18" ry="12" fill="url(#trapGreen)" transform="rotate(-30 125 135)"/>
+  <!-- Trigger hairs -->
+  <line x1="120" y1="140" x2="125" y2="135" stroke="#000" stroke-width="1"/>
+  <line x1="130" y1="145" x2="135" y2="140" stroke="#000" stroke-width="1"/>
+  <line x1="125" y1="150" x2="130" y2="145" stroke="#000" stroke-width="1"/>
+  
+  <!-- Trap 2 (closed) -->
+  <ellipse cx="200" cy="120" rx="20" ry="8" fill="url(#trapRed)"/>
+  <!-- Teeth -->
+  <path d="M180 120 L185 115 L190 120 L195 115 L200 120 L205 115 L210 120 L215 115 L220 120" 
+        stroke="#006400" stroke-width="2" fill="none"/>
+  
+  <!-- Trap 3 (partially open) -->
+  <ellipse cx="270" cy="150" rx="16" ry="10" fill="url(#trapGreen)" transform="rotate(45 270 150)"/>
+  <ellipse cx="275" cy="145" rx="16" ry="8" fill="url(#trapRed)" transform="rotate(60 275 145)"/>
+  <!-- Trigger hairs -->
+  <line x1="270" y1="150" x2="275" y2="145" stroke="#000" stroke-width="1"/>
+  <line x1="265" y1="155" x2="270" y2="150" stroke="#000" stroke-width="1"/>
+  
+  <!-- Trap 4 (open wide) -->
+  <ellipse cx="160" cy="220" rx="15" ry="10" fill="url(#trapGreen)" transform="rotate(-20 160 220)"/>
+  <ellipse cx="170" cy="225" rx="15" ry="10" fill="url(#trapRed)" transform="rotate(20 170 225)"/>
+  <!-- Teeth on edges -->
+  <path d="M145 215 L150 210 L155 215" stroke="#006400" stroke-width="2" fill="none"/>
+  <path d="M175 230 L180 225 L185 230" stroke="#006400" stroke-width="2" fill="none"/>
+  
+  <!-- Text label -->
+  <text x="200" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#006400" font-weight="bold">
+    Dionaea muscipula
+  </text>
+</svg>

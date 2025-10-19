@@ -1,0 +1,42 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="orangeGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffa500;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ff7f00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b4513;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="leafGreen2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#228b22;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#006400;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#fff8f0"/>
+  
+  <!-- Main vine -->
+  <path d="M60 290 Q120 220 180 180 Q240 140 300 160 Q340 180 380 140" 
+        stroke="#228b22" stroke-width="6" fill="none"/>
+  
+  <!-- Leaves -->
+  <ellipse cx="140" cy="200" rx="22" ry="35" fill="url(#leafGreen2)" transform="rotate(-20 140 200)"/>
+  <ellipse cx="220" cy="160" rx="28" ry="40" fill="url(#leafGreen2)" transform="rotate(25 220 160)"/>
+  <ellipse cx="300" cy="180" rx="25" ry="38" fill="url(#leafGreen2)" transform="rotate(-35 300 180)"/>
+  
+  <!-- Orange pitcher -->
+  <ellipse cx="340" cy="200" rx="32" ry="50" fill="url(#orangeGreen)"/>
+  <ellipse cx="340" cy="188" rx="35" ry="12" fill="#ffa500"/>
+  
+  <!-- Pitcher details -->
+  <path d="M310 188 Q315 178 320 188" stroke="#8b4513" stroke-width="2" fill="none"/>
+  <ellipse cx="335" cy="178" rx="22" ry="6" fill="#ff7f00" transform="rotate(-15 335 178)"/>
+  
+  <!-- Distinctive orange markings -->
+  <ellipse cx="325" cy="210" rx="8" ry="15" fill="#ff4500" opacity="0.7"/>
+  <ellipse cx="350" cy="220" rx="6" ry="12" fill="#ff4500" opacity="0.7"/>
+  
+  <!-- Text label -->
+  <text x="200" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#8b4513" font-weight="bold">
+    N. ventricosa 'orange' x. dubia
+  </text>
+</svg>
